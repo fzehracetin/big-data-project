@@ -8,9 +8,9 @@ We coded 5 different descriptive statistical functions for map reduce jobs:
 * [Min-Max](https://github.com/fzehracetin/big-data-project/blob/main/javaProject/src/MinMax.java)
 * [Standard Deviation](https://github.com/fzehracetin/big-data-project/blob/main/javaProject/src/StandardDeviation.java)
 
-## Multi-node Hadoop Installation
+## Multi-node Hadoop Installation ⚙
 
-## Running Map Reduce Jobs
+## Running Map Reduce Jobs 🏃🏻‍♂️
 
-## Web GUI
+## Web GUI 💻
 
