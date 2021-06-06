@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title style="position: absolute; top: 90px">Big Data Term Project</title>
+    <link rel="icon" href="{{ url_for('static', filename='image/elephant.svg') }}">
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/main.css') }}">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+</head>
+
+<header>
+    <h1>Big Data Term Project</h1>
+</header>
+<body style="font-family: Roboto; background-image: url({{ url_for('static', filename='image/data.jpg') }});
+background-repeat: no-repeat; background-size: 1800px 1000px;">
+
+<div class="modal-content" style="display: {{run_display}}">
+  <h2 id="modal_header"> Run Job </h2>
+  <form method="POST" enctype="multipart/form-data" action="http://localhost:5000/">
+    <label class="regular_label">Dataset
+    <br><br>
+         <input type = "file" name = "file" />
+    <br><br>
+    </label>
+    <label class="regular_label"> Descriptive Statistics Functions
+        <select class="text_input" name="function">
+        <option hidden selected>Select function</option>
+        <option>Aggregation</option>
+        <option>Average</option>
+        <option>Median</option>
+        <option>Min-Max</option>
+        <option>Standard Deviation</option>
+      </select>
+    </label>
+    <input type="submit" name="Submit" value="Run Job" style="margin: 10px 170px; width: 120px;">
+  </form>
+</div>
+
+<div class="modal-content" style="display: {{result_display}}">
+  <h2> Result </h2>
+  <form method="POST" action="http://localhost:5000/result" enctype="multipart/form-data">
+      <div style="text-align: center">
+          Your {{function}} job just finished. Download the result.
+          <br>
+          Time Elapsed: {{time}}
+      </div>
+    <input type="submit" name="Submit" value="Go Back" style="margin-right: 0px; margin-left: 80px; margin-top: 20px; width: 120px; background-color: gray">
+    <input type="submit" name="Submit" value="Download the Result" style="margin-right: 40px; margin-left: 30px; margin-top: 20px; width=170px">
+  </form>
+</div>
+
+</body>
+</html>
