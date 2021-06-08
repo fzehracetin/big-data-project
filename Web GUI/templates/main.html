@@ -19,6 +19,7 @@ background-repeat: no-repeat; background-size: 1800px 1000px;">
 <div class="modal-content" style="display: {{run_display}}">
   <h2 id="modal_header"> Run Job </h2>
   <form method="POST" enctype="multipart/form-data" action="http://localhost:5000/">
+    <input type="hidden" name="modal_type" value={{main_job}}>
     <label class="regular_label">Dataset
     <br><br>
          <input type = "file" name = "file" />
@@ -30,7 +31,7 @@ background-repeat: no-repeat; background-size: 1800px 1000px;">
         <option>Aggregation</option>
         <option>Average</option>
         <option>Median</option>
-        <option>Min-Max</option>
+        <option>MinMax</option>
         <option>Standard Deviation</option>
       </select>
     </label>
@@ -39,15 +40,39 @@ background-repeat: no-repeat; background-size: 1800px 1000px;">
 </div>
 
 <div class="modal-content" style="display: {{result_display}}">
-  <h2> Result </h2>
+  <h2> Your Job Finished </h2>
   <form method="POST" action="http://localhost:5000/result" enctype="multipart/form-data">
       <div style="text-align: center">
           Your {{function}} job just finished. Download the result.
           <br>
           Time Elapsed: {{time}}
       </div>
-    <input type="submit" name="Submit" value="Go Back" style="margin-right: 0px; margin-left: 80px; margin-top: 20px; width: 120px; background-color: gray">
-    <input type="submit" name="Submit" value="Download the Result" style="margin-right: 40px; margin-left: 30px; margin-top: 20px; width=170px">
+    <input type="submit" name="Submit" value="Download the Result" style="margin-right: 40px; margin-left: 120px;
+    margin-top: 20px; width=170px">
+    <input type="submit" name="Submit" value="Go Back" style="margin-right: 0px; margin-left: 80px; margin-top: 20px;
+    width: 120px; background-color: gray">
+    <input type="submit" name="Submit" value="Run Another Job" style="margin-right: 40px; margin-left: 30px;
+    margin-top: 20px; width=170px; background-color: #21618C">
+  </form>
+</div>
+
+<div class="modal-content" style="display: {{another_job_display}}">
+  <h2 > Run Another Job with the Same Dataset </h2>
+  <form method="POST" enctype="multipart/form-data" action="http://localhost:5000/">
+    <label class="regular_label"> Descriptive Statistics Functions
+        <select class="text_input" name="function">
+        <option hidden selected>Select function</option>
+        <option>Aggregation</option>
+        <option>Average</option>
+        <option>Median</option>
+        <option>MinMax</option>
+        <option>Standard Deviation</option>
+      </select>
+    </label>
+    <input type="submit" name="Submit" value="Go Main Page" style="margin-right: 0px; margin-left: 80px; margin-top: 20px;
+    width: 120px; background-color: gray">
+    <input type="submit" name="Submit" value="Run Job" style="margin-right: 40px; margin-left: 30px;
+    margin-top: 20px; width: 120px;">
   </form>
 </div>
 
