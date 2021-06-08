@@ -1,8 +1,8 @@
 from flask import Flask, render_template, request, send_file
 from werkzeug.utils import secure_filename
-from hdfs import InsecureClient
 import os
 import time
+from uuid import uuid4
 
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
 if not os.path.isdir(UPLOAD_FOLDER):
@@ -14,10 +14,9 @@ if not os.path.isdir(DOWNLOAD_FOLDER):
 
 app = Flask(__name__)
 
-client = InsecureClient('localhost:9870')
 file_name = ""
-hdfs_input_path = "input"
-hdfs_output_path = "outputTestWeb5"
+hdfs_output_name = ""
+name_node_data_path = "/home/datasets/"
 
 
 @app.route('/')
@@ -25,60 +24,64 @@ def main():
     return render_template('main.html', run_display="block", result_display="none")
 
 
-def download_from_hdfs(hdfs_path):
-    global file_name
-    client.download(hdfs_path, DOWNLOAD_FOLDER)
-    file_name = hdfs_path.split('/')[-1]
+def download_from_hdfs():
+    name_node_output_path = name_node_data_path + hdfs_output_name + ".txt"
+    local_output_path = DOWNLOAD_FOLDER + "\\" + hdfs_output_name + ".txt"
+    # copy output file to name node
+    copy_to_name_node = "docker exec -it namenode hadoop fs -getmerge " + hdfs_output_name + " " + \
+                        name_node_output_path
+    # copy file to local file system
+    copy_to_local_fs = "docker cp namenode:" + name_node_output_path + " " + local_output_path
+    os.system('cmd /c "{} & {}"'.format(copy_to_name_node, copy_to_local_fs))
+    return
 
 
-def upload_to_hdfs(local_path, hdfs_path, selected_function):
-    filename = local_path.split("\\")[-1]
-    print(filename)
-    cmd_command = "docker cp " + local_path + " namenode:/home/datasets/" + filename
-    print(cmd_command)
-    
-    cmd_command2 = "docker exec -it namenode hadoop fs -put /home/datasets/" + filename + " input"
-    print(cmd_command2)
-    
-    #cmd_command3 = "docker exec -it namenode hdfs dfs -put ./input/* input"
-    cmd_command3 = "docker exec -it namenode hadoop jar mapReduce.jar " + selected_function + " input " + \
-                  hdfs_output_path
-    
-    cmd_command4 = "docker exec -it namenode hadoop fs -getmerge " + hdfs_output_path + " home/datasets/" + hdfs_output_path + ".txt"
-    cmd_command5 = "docker cp namenode:home/datasets/" + hdfs_output_path + ".txt downloads\\" + hdfs_output_path + ".txt"
-    
-    os.system('cmd /c "{} & {} & {} & {} & {}"'.format(cmd_command, cmd_command2, cmd_command3, cmd_command4, cmd_command5))
+def upload_to_hdfs(local_input_path, hdfs_input_path):
+    name_node_input_path = name_node_data_path + file_name
+    # upload file to name node
+    upload_to_name_node = "docker cp " + local_input_path + " namenode:" + name_node_input_path
+    # put file to hadoop file system
+    put_to_hdfs = "docker exec -it namenode hadoop fs -put " + name_node_input_path + " " + hdfs_input_path
+
+    os.system('cmd /c "{} & {}"'.format(upload_to_name_node, put_to_hdfs))
+    return
     
 
-def run_job(hdfs_output_path, selected_function):  # "Average"
-    cmd_command = "docker exec -it namenode hadoop jar mapReduce.jar " + selected_function + " input " + \
-                  hdfs_output_path
-    os.system('cmd /k "{}"'.format(cmd_command))
+def run_job(selected_function, hdfs_input_path):  # "Average"
+    # run mapreduce job
+    run_job_command = "docker exec -it namenode hadoop jar mapReduce.jar " + selected_function + " " + \
+                      hdfs_input_path + " " + hdfs_output_name
+    os.system('cmd /c "{}"'.format(run_job_command))
     return
 
 
 @app.route('/', methods=['POST'])
 def upload_file():
+    global hdfs_output_name, file_name
     start = time.time()
     uploaded_file = request.files['file']
     if uploaded_file.filename != '':
-        uploaded_file.save(UPLOAD_FOLDER + "/" + secure_filename(uploaded_file.filename))
+        file_name = secure_filename(uploaded_file.filename)
+        uploaded_file.save(UPLOAD_FOLDER + "/" + file_name)
 
     selected_function = request.form.get("function")
-    print("File: {}, Function: {}".format(uploaded_file.filename, selected_function))
+    print("File: {}, Function: {}".format(file_name, selected_function))
 
+    hdfs_input_path = "input"
+    # random name for output file
+    hdfs_output_name = str(uuid4())
+    print("Output name: ", hdfs_output_name)
     # upload file to hdfs
-    full_path = "C:\\Users\\fazb7\\Desktop\\SchoolProjects\\BigData\\Web_GUI\\WebGUI\\uploads\\" + uploaded_file.filename
-    print(full_path)
-    upload_to_hdfs(full_path, hdfs_input_path, selected_function)
-    #UPLOAD_FOLDER + "\\" + secure_filename(uploaded_file.filename),
+    upload_path = UPLOAD_FOLDER + "\\" + file_name
+    upload_to_hdfs(upload_path, hdfs_input_path)
     # run jobs here
-    #run_job(hdfs_output_path, selected_function)
-    
+    run_job(selected_function, hdfs_input_path)
+    # save mapreduce output to local file system
+    download_from_hdfs()
     end = time.time()
     time_elapsed = end - start
     return render_template('main.html', run_display="none", result_display="block", function=selected_function,
-                           time="%.4f" % time_elapsed)
+                           time="%.2f" % time_elapsed)
 
 
 @app.route('/result', methods=['POST'])
@@ -86,11 +89,10 @@ def result():
     if request.form['Submit'] == 'Go Back':
         return render_template('main.html', run_display="block", result_display="none")
     elif request.form['Submit'] == 'Download the Result':
-        #download_from_hdfs(hdfs_output_path)
-        #return render_template('main.html', run_display="none", result_display="block")
-        return send_file(DOWNLOAD_FOLDER + "\\" + hdfs_output_path + ".txt", mimetype='text/plain', attachment_filename=file_name, as_attachment=True)
+        f_name = file_name.split(".")[0]
+        return send_file(DOWNLOAD_FOLDER + "\\" + hdfs_output_name + ".txt", mimetype='text/plain',
+                         attachment_filename=f_name + "_output.txt", as_attachment=True)
 
 
 if __name__ == "__main__":
     app.run(debug=True)
-
