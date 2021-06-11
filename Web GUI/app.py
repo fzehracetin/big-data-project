@@ -55,6 +55,8 @@ def run_job(selected_function, hdfs_input_path):  # "Average"
     # run mapreduce job
     if selected_function == "Aggregation":
         selected_function = "Sum"
+    elif selected_function == "Standard Deviation":
+        selected_function = "StandardDeviation"
     run_job_command = "docker exec -it namenode hadoop jar mapReduce.jar " + selected_function + " " + \
                       hdfs_input_path + " " + hdfs_output_name
     os.system('cmd /c "{}"'.format(run_job_command))
@@ -65,7 +67,6 @@ def run_job(selected_function, hdfs_input_path):  # "Average"
 def upload_file():
     global hdfs_output_name, file_name, gui_sign
     if request.form['Submit'] == "Run Job":
-        start = time.time()
         if gui_sign == 1:
             uploaded_file = request.files['file']
             if uploaded_file.filename != '':
@@ -82,6 +83,7 @@ def upload_file():
         # upload file to hdfs
         upload_path = UPLOAD_FOLDER + "\\" + file_name
         upload_to_hdfs(upload_path, hdfs_input_path)
+        start = time.time()
         # run jobs here
         run_job(selected_function, hdfs_input_path)
         # save mapreduce output to local file system
